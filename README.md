@@ -76,40 +76,52 @@ sequenceDiagram
     Peers->>Client: Download new Wasm runtime
     Client->>STF: Load and use the new Wasm runtime for subsequent blocks
 ```
+## 10. Enums
+* We use enums a lot in polkadot-sdk. Take this for an example:
+```rust
+pub enum RuntimeCall {
+	Balances(balances::Call<Runtime>),
+}
 
-## 10. DotCodeSchool Lecture flow:
+pub enum Call<T: Config> {
+	Transfer { to: T::AccountID, amount: T::Balance },
+}
+```
+* In this case, we have a variant `RuntimeCall::Balances`, which itself contains a type `balances::Call`. This means we can access all the calls exposed by `balances:Call` under this variant. As we create more pallets or extend our calls, this nested structure will scale very well. We call the `RuntimeCall` an **"outer enum"**, and the `balances::Call` an **"inter enum"**.
 
-### 10.1 Balances Pallet:
+## 11. DotCodeSchool Lecture flow:
+
+### 11.1 Balances Pallet:
 
 * At the heart of a blockchain is a state machine.
 * This Pallet will tell you: how much balance each user has, provide functions which allow users to transfer those balances, and even some low level functions to allow your blockchain system to manipulate those balances if needed.
 * We can add state to our pallet by adding fields (like balances{BTreeMap}) into our Pallet struct.
 * Add functions to our pallet to allow users to interact with the state.
 
-### 10.2 System Pallet
+### 11.2 System Pallet
 * The System Pallet is a "meta"-pallet which stores all the metadata needed for your blockchain to function. For example, the current blocknumber or the nonce of users on your blockchain.
 * This pallet does not need to expose any functions to end users, but can still play an important role in our overall state transition function.
 * System Pallet needs to expose functions which allow us to access and modify the **block number** and the **nonce**.
 * **Block number**: Your blockchain's blocknumber stored in the System Pallet.
 * **Nonce**: In this context, each user on your blockchain has a nonce which gives a unique value to each transaction the user submits to the blockchain. We keep track of 'nonce':'count_of_transactions' in a BTreeMap.
 
-### 10.3 Runtime Pallet
+### 11.3 Runtime Pallet
 * You can think of the runtime as the accumulation of all logic which composes your state transition function. It will combine all of your pallets into a single object, and then expose that single object as the entry point for your users to interact with.
 * The runtime contains the **System Pallet** and the **Balances Pallet**.
 
-### 10.4 Using Named And Generic Types and making them configurable:
+### 11.4 Using Named And Generic Types and making them configurable:
 * We use named types to clearly define what a type represents. We make these named types generic so that we can use them with different types.
 * We implement a `Config` trait with associated types. Then we can use a single generic parameter `T` in our structs and have a trait bound of `Config` on `T`. This way, we can access datatypes from `T` like `T::AccountId` and `T::Balance` in our structs.
 * We can also use **Trait Inheritance** to keep the repeatition to a minimum like - `pub trait Config: crate::system::Config {}`. However, we need to be aware of any **Tight Coupling**. In fact, with Substrate, all pallets are tightly coupled to the System Pallet, because the System Pallet provides all the meta-types for your blockchain system.
 
-### 10.5 Support Pallet
+### 11.5 Support Pallet
 * The `support` module parallels something similar to the `frame_support` crate that you would find in the `Polkadot SDK`. The reason the `frame_support` crate exists, is to allow multiple other crates use common types and trait, while avoiding cyclic dependencies, which is not allowed in Rust.
 * The first set of primitives provided by the support module are a set of structs that we need to construct a simple Block in a Blockchain. We keep the Block completely generic over the Header and Extrinsic type.
 
-#### 10.5.1 Block
+#### 11.5.1 Block
 * A block is basically broken up into two parts: the header and a vector of extrinsics.
 
-##### 10.5.1.1 Header
+##### 11.5.1.1 Header
 The block header contains metadata about the block which is used to verify that the block is valid. In our simple state machine, we only store the blocknumber in the header, but real blockchains like Polkadot have:
 
 * Parent Hash
@@ -118,10 +130,13 @@ The block header contains metadata about the block which is used to verify that 
 * Extrinsics Root
 * Consensus Digests / Logs
 
-##### 10.5.1.2 Extrinsics
+##### 11.5.1.2 Extrinsics
 * In our simple state machine, extrinsics are synonymous with user transactions. Thus our extrinsic type is composed of a Call (the function we will execute) and a Caller (the account that wants to execute that function).Real world blockchains like Polkadot have many different types of extrinsics.
 
-#### 10.5.2 Dispatching Calls
+#### 11.5.2 Dispatching Calls
 * The runtime, acting as a single entrypoint for the whole state transition function needs to be able to route incoming calls to the appropriate functions in the appropriate pallets. For this, we need the `Dispatch` trait and the `DispatchResult`.
 * **Runtime Calls** are an accumulation of all the calls which are exposed to the world. This is useful as a `type` as we can have mappings like `call` and `caller` where the `call` could be of one of the types in `RuntimeCalls`.
 * We also define concrete types for the `Block`, `Header`, and `Extrinsic` types.
+* We implement the `Dispatch` trait for all pallets. Then we can use a **nested** `dispatch` function to route calls to the appropriate pallet. This way when the pallet code gets updated, we don't have to update anything in the runtime as it would just forward the call to the updated dispatch function in the pallet.
+
+### 11.6 Proof of Existence Pallet
