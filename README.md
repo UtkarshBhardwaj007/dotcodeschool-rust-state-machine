@@ -25,10 +25,10 @@ Every node in the network applies the same state transition logic to maintain co
 The Genesis State is the initial state of a blockchain. It represents the very first block, often referred to as "block 0" or the "genesis block." This block is unique because it is the only block that does not reference a previous block, as it is the starting point of the blockchain. It contains: Initial Accounts and Balances, Network Parameters, Smart Contracts and Code, and any Configuration Settings.
 
 ## 5. Traits
-Traits can contain within it two things:
-
-* functions which must be implemented by the type
-* associated types
+* Traits can contain within it two things:
+    * functions which must be implemented by the type
+    * associated types
+* When you want to use a function or method that is defined within a trait, you need to ensure that the trait is in scope. This is because Rust requires explicit imports for trait methods to avoid ambiguity and to make the code more readable and maintainable.
 
 ## 6. Pallet:
 "Pallet" is a term specific to the Polkadot SDK, which refers to Rust modules which contain logic specific for your blockchain runtime.
@@ -123,5 +123,5 @@ The block header contains metadata about the block which is used to verify that 
 
 #### 10.5.2 Dispatching Calls
 * The runtime, acting as a single entrypoint for the whole state transition function needs to be able to route incoming calls to the appropriate functions in the appropriate pallets. For this, we need the `Dispatch` trait and the `DispatchResult`.
-* **Runtime Calls** are an accumulation of all the calls which are exposed to the world. This is useful as a `type` as we can have mappings like `call` and `caller` where the `call` could be of th type `RuntimeCalls`.
+* **Runtime Calls** are an accumulation of all the calls which are exposed to the world. This is useful as a `type` as we can have mappings like `call` and `caller` where the `call` could be of one of the types in `RuntimeCalls`.
 * We also define concrete types for the `Block`, `Header`, and `Extrinsic` types.
