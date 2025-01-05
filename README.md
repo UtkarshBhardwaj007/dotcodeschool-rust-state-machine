@@ -87,7 +87,7 @@ pub enum Call<T: Config> {
 	Transfer { to: T::AccountID, amount: T::Balance },
 }
 ```
-* In this case, we have a variant `RuntimeCall::Balances`, which itself contains a type `balances::Call`. This means we can access all the calls exposed by `balances:Call` under this variant. As we create more pallets or extend our calls, this nested structure will scale very well. We call the `RuntimeCall` an **"outer enum"**, and the `balances::Call` an **"inter enum"**.
+* In this case, we have a variant `RuntimeCall::Balances`, which itself contains a type `balances::Call`. This means we can access all the calls exposed by `balances:Call` under this variant. As we create more pallets or extend our calls (add more variants to the enum `call` in our pallets), this nested structure will scale very well. We call the `RuntimeCall` an **"outer enum"**, and the `balances::Call` an **"inter enum"**.
 
 ## 11. DotCodeSchool Lecture flow:
 
@@ -140,3 +140,6 @@ The block header contains metadata about the block which is used to verify that 
 * We implement the `Dispatch` trait for all pallets. Then we can use a **nested** `dispatch` function to route calls to the appropriate pallet. This way when the pallet code gets updated, we don't have to update anything in the runtime as it would just forward the call to the updated dispatch function in the pallet.
 
 ### 11.6 Proof of Existence Pallet
+* The Proof of Existence Pallet uses the blockchain to provide a secure and immutable ledger that can be used to verify the existence of a particular document or piece of data at a specific point in time as the blockchain acts as an immutable ledger whose history cannot be changed.
+* We use a `BTreeMap` for storage here. In actual blockchains like `PolkaDot`, there usually is a storage layer that is used to store the data. Rather than having a map from accounts to some data, we will actually map the content we want to claim to the user who owns it. This construction of content -> account allows an account to be the owner of multiple different claims, but having each claim only be owned by one user.
+* Remember that when we create the `call enum` in each pallet, we don't need to pass the caller data in the enum variants. The `caller` is provided by the `dispatch` logic.
