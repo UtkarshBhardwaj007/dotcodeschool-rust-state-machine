@@ -19,58 +19,14 @@ mod types {
 	pub type Content = &'static str;
 }
 
-// These are all the calls which are exposed to the world.
-// Note that it is just an accumulation of the calls exposed by each module.
-pub enum RuntimeCall {
-	Balances(balances::Call<Runtime>),
-	ProofOfExistence(proof_of_existence::Call<Runtime>),
-}
-
 // This is our main Runtime.
 // It accumulates all of the different pallets we want to use.
 #[derive(Debug)]
+#[macros::runtime]
 pub struct Runtime {
 	system: system::Pallet<Self>,
 	balances: balances::Pallet<Self>,
 	proof_of_existence: proof_of_existence::Pallet<Self>,
-}
-
-impl Runtime {
-	// Create a new instance of the main Runtime, by creating a new instance of each pallet.
-	fn new() -> Self {
-		Self {
-			system: system::Pallet::<Self>::new(),
-			balances: balances::Pallet::<Self>::new(),
-			proof_of_existence: proof_of_existence::Pallet::<Self>::new(),
-		}
-	}
-
-	// Execute a block of extrinsics. Increments the block number.
-	fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
-		// Increment the system's block number.
-		self.system.inc_block_number();
-
-		// Check that the block number of the incoming block matches the current block number,
-		// or return an error.
-		if block.header.block_number != self.system.block_number() {
-			return Err("block number does not match what is expected");
-		}
-
-		// Iterate over the extrinsics in the block
-		for (i, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
-			// Increment the nonce of the caller.
-			self.system.inc_nonce(&caller);
-			// Dispatch the call.
-			let _res = self.dispatch(caller, call).map_err(|e| {
-				eprintln!(
-					"Extrinsic Error\n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
-					block.header.block_number, i+1, e
-				)
-			});
-		}
-		println!("{:#?}", self);
-		Ok(())
-	}
 }
 
 impl system::Config for Runtime {
@@ -85,31 +41,6 @@ impl balances::Config for Runtime {
 
 impl proof_of_existence::Config for Runtime {
 	type Content = types::Content;
-}
-
-impl support::Dispatch for Runtime {
-	type Caller = types::AccountId;
-	type Call = RuntimeCall;
-	// Dispatch a call on behalf of a caller. Increments the caller's nonce.
-	//
-	// Dispatch allows us to identify which underlying module call we want to execute.
-	// Note that we extract the `caller` from the extrinsic, and use that information
-	// to determine who we are executing the call on behalf of.
-	fn dispatch(
-		&mut self,
-		caller: Self::Caller,
-		runtime_call: Self::Call,
-	) -> support::DispatchResult {
-		match runtime_call {
-			RuntimeCall::Balances(call) => {
-				self.balances.dispatch(caller, call)?;
-			},
-			RuntimeCall::ProofOfExistence(call) => {
-				self.proof_of_existence.dispatch(caller, call)?;
-			},
-		}
-		Ok(())
-	}
 }
 
 fn main() {
@@ -149,14 +80,14 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::transfer {
+				call: RuntimeCall::balances(balances::Call::transfer {
 					to: bob.clone(),
 					amount: 30,
 				}),
 			},
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::transfer {
+				call: RuntimeCall::balances(balances::Call::transfer {
 					to: charlie.clone(),
 					amount: 20,
 				}),
@@ -169,13 +100,13 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
+				call: RuntimeCall::proof_of_existence(proof_of_existence::Call::create_claim {
 					claim: "hello I am alice",
 				}),
 			},
 			support::Extrinsic {
 				caller: bob.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
+				call: RuntimeCall::proof_of_existence(proof_of_existence::Call::create_claim {
 					claim: "hello I am alice",
 				}),
 			},
@@ -187,13 +118,13 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::revoke_claim {
+				call: RuntimeCall::proof_of_existence(proof_of_existence::Call::revoke_claim {
 					claim: "hello I am alice",
 				}),
 			},
 			support::Extrinsic {
 				caller: bob.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
+				call: RuntimeCall::proof_of_existence(proof_of_existence::Call::create_claim {
 					claim: "hello I am alice",
 				}),
 			},

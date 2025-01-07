@@ -158,3 +158,16 @@ The block header contains metadata about the block which is used to verify that 
   * **Expand**:
     * Once we have parsed all the data we need, generating the code is straight forward. If you jump down to `let dispatch_impl = quote!` you will see a bunch of code that looks like the templates we used earlier in the tutorial. We just left markers where the macro generation logic should place all the information to write the code we need.
 * Rust provides the command `cargo expand` which allows you to output the generated rust code after all macros have been applied to your project.
+
+#### 11.7.2 The Runtime Macro
+* The purpose of the `#[macros::runtime]` macro is to get rid of all of the boilerplate function we implemented for the `Runtime`, including `fn new()` and `fn execute_block()`. Similar to the `Call` macro, it also generates the `enum RuntimeCall` and all the `Dispatch` logic for re-dispatching to pallets.
+* **NOTE**: It appears that the `Runtime` macro and the `Call` macro both get rid of the `enum call` and the `Dispatch` logic.
+* **NOTE**: Due to the quirks of using macros, our `RuntimeCall` or `Call` enum (from the `Balances` Pallet) will have snake_case variants which exactly match the name of the fields in the Runtime struct.
+* We apply the `#[macros::runtime]` attribute on top of the main `struct Runtime` object.
+* The Call macro has 2 main files:
+  * **Parse**: 
+    * In order to generate the code we want, we need to keep track of: The name of the struct representing our Runtime. Usually this is `Runtime`, but we provide flexibility to the developer, The list of Pallets included in our `Runtime`, Their name, as specified by the user and The specific type for their `Pallet`, for example `balances::Pallet` vs `proof_of_existence::Pallet`.
+    * All of this information is tracked in the `RuntimeDef` struct. We are also checking that our `Runtime` definition always contains the `System Pallet`, and does so as the first pallet in our `Runtime` definition.
+  * **Expand**:
+    * Starting with `let runtime_impl = quote!`, you will see the entire `impl Runtime` code block has been swallowed into the macro. Since we know all the pallets in your `Runtime`, we can automatically implement functions like `new()`. The `execute_block` function does not take advantage of any of the parsed data, but the code is completely boilerplate, so we hide it away.
+    * We have another code block being generated with `let dispatch_impl = quote!` which is the `enum RuntimeCall` and the implementation of `Dispatch` for `Runtime`.
