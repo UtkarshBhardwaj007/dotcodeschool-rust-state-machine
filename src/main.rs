@@ -169,13 +169,31 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
 					claim: "hello I am alice",
 				}),
 			},
 			support::Extrinsic {
 				caller: bob.clone(),
-				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
+					claim: "hello I am alice",
+				}),
+			},
+		],
+	};
+
+	let block_3 = types::Block {
+		header: support::Header { block_number: 3 },
+		extrinsics: vec![
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::revoke_claim {
+					claim: "hello I am alice",
+				}),
+			},
+			support::Extrinsic {
+				caller: bob.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::create_claim {
 					claim: "hello I am alice",
 				}),
 			},
@@ -189,6 +207,7 @@ fn main() {
 	*/
 	runtime.execute_block(block_1).expect("invalid block");
 	runtime.execute_block(block_2).expect("invalid block");
+	runtime.execute_block(block_3).expect("invalid block");
 	// Simply print the debug format of our runtime state.
 	// println!("{:#?}", runtime);
 }

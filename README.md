@@ -111,8 +111,8 @@ pub enum Call<T: Config> {
 
 ### 11.4 Using Named And Generic Types and making them configurable:
 * We use named types to clearly define what a type represents. We make these named types generic so that we can use them with different types.
-* We implement a `Config` trait with associated types. Then we can use a single generic parameter `T` in our structs and have a trait bound of `Config` on `T`. This way, we can access datatypes from `T` like `T::AccountId` and `T::Balance` in our structs.
-* We can also use **Trait Inheritance** to keep the repeatition to a minimum like - `pub trait Config: crate::system::Config {}`. However, we need to be aware of any **Tight Coupling**. In fact, with Substrate, all pallets are tightly coupled to the System Pallet, because the System Pallet provides all the meta-types for your blockchain system.
+* We implement a `Config` trait with associated types. Then we can use a single generic parameter `T` in our structs and have a trait bound of `Config` on `T`. This way, we can access data types from `T` like `T::AccountId` and `T::Balance` in our structs.
+* We can also use **Trait Inheritance** to keep the repetition to a minimum like - `pub trait Config: crate::system::Config {}`. However, we need to be aware of any **Tight Coupling**. In fact, with Substrate, all pallets are tightly coupled to the System Pallet, because the System Pallet provides all the meta-types for your blockchain system.
 
 ### 11.5 Support Pallet
 * The `support` module parallels something similar to the `frame_support` crate that you would find in the `Polkadot SDK`. The reason the `frame_support` crate exists, is to allow multiple other crates use common types and trait, while avoiding cyclic dependencies, which is not allowed in Rust.
@@ -157,3 +157,4 @@ The block header contains metadata about the block which is used to verify that 
     * Also, during the parsing process, we might want to check for certain consistencies in the code being parsed. In this case, we require that every callable function muse have `caller` as their first parameter with `type T::AccountId`. This checking logic is handled by `fn check_caller_arg`.
   * **Expand**:
     * Once we have parsed all the data we need, generating the code is straight forward. If you jump down to `let dispatch_impl = quote!` you will see a bunch of code that looks like the templates we used earlier in the tutorial. We just left markers where the macro generation logic should place all the information to write the code we need.
+* Rust provides the command `cargo expand` which allows you to output the generated rust code after all macros have been applied to your project.

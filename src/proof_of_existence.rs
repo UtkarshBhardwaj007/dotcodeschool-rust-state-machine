@@ -29,7 +29,10 @@ impl<T: Config> Pallet<T> {
 		// `get` the `claim`
 		self.claims.get(claim)
 	}
+}
 
+#[macros::call]
+impl<T: Config> Pallet<T> {
 	/// Create a new claim on behalf of the `caller`.
 	/// This function will return an error if someone already has claimed that content.
 	pub fn create_claim(&mut self, caller: T::AccountId, claim: T::Content) -> DispatchResult {
@@ -50,30 +53,6 @@ impl<T: Config> Pallet<T> {
 		}
 		self.claims.remove(&claim);
 		Ok(())
-	}
-}
-
-// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher,
-// and not included as a parameter of the call.
-pub enum Call<T: Config> {
-	// Remember that you only need to pass in the `claim` data, as `caller` information is passed
-	// in through the `dispatch` logic.
-	CreateClaim { claim: T::Content },
-	RevokeClaim { claim: T::Content },
-}
-
-// match on `call` and forward the `caller` and `claim` data to the
-// appropriate function.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-	type Caller = T::AccountId;
-	type Call = Call<T>;
-
-	fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
-		match call {
-			Call::CreateClaim { claim } => self.create_claim(caller, claim),
-			Call::RevokeClaim { claim } => self.revoke_claim(caller, claim),
-		}
 	}
 }
 
