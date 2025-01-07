@@ -9,11 +9,11 @@ use crate::support::Dispatch;
 // Modules are configured for these types directly, and they satisfy all of our
 // trait requirements.
 mod types {
-	pub type AccountID = String;
+	pub type AccountId = String;
 	pub type Balance = u128;
 	pub type BlockNumber = u32;
 	pub type Nonce = u32;
-	pub type Extrinsic = crate::support::Extrinsic<AccountID, crate::RuntimeCall>;
+	pub type Extrinsic = crate::support::Extrinsic<AccountId, crate::RuntimeCall>;
 	pub type Header = crate::support::Header<BlockNumber>;
 	pub type Block = crate::support::Block<Header, Extrinsic>;
 	pub type Content = &'static str;
@@ -75,7 +75,7 @@ impl Runtime {
 
 impl system::Config for Runtime {
 	type BlockNumber = types::BlockNumber;
-	type AccountID = types::AccountID;
+	type AccountId = types::AccountId;
 	type Nonce = types::Nonce;
 }
 
@@ -88,7 +88,7 @@ impl proof_of_existence::Config for Runtime {
 }
 
 impl support::Dispatch for Runtime {
-	type Caller = types::AccountID;
+	type Caller = types::AccountId;
 	type Call = RuntimeCall;
 	// Dispatch a call on behalf of a caller. Increments the caller's nonce.
 	//
@@ -149,14 +149,14 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::Transfer {
+				call: RuntimeCall::Balances(balances::Call::transfer {
 					to: bob.clone(),
 					amount: 30,
 				}),
 			},
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::Transfer {
+				call: RuntimeCall::Balances(balances::Call::transfer {
 					to: charlie.clone(),
 					amount: 20,
 				}),

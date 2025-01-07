@@ -12,13 +12,13 @@ pub trait Config: crate::system::Config {
  */
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
-	/**
+	/** 
 	 * In the Polkadot SDK, there is a separate storage layer which manages a proper key-value
 	 * database which holds all the information (past and present) of our blockchain system.
 	 * There are abstractions which look and behave just like a BTreeMap in the Polkadot SDK,
 	 * but the underlying logic which maintains that data is much more complex.
 	 */
-	balances: BTreeMap<T::AccountID, T::Balance>,
+	balances: BTreeMap<T::AccountId, T::Balance>,
 }
 
 impl<T: Config> Pallet<T> {
@@ -26,7 +26,7 @@ impl<T: Config> Pallet<T> {
 		Self { balances: BTreeMap::new() }
 	}
 
-	pub fn set_balance(&mut self, who: &T::AccountID, amount: T::Balance) {
+	pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
 		self.balances.insert(who.clone(), amount);
 	}
 
@@ -34,55 +34,32 @@ impl<T: Config> Pallet<T> {
 	 * Get the balance of an account `who`. If the account has no stored balance, we return
 	 * zero.
 	 */
-	pub fn balance(&self, who: &T::AccountID) -> T::Balance {
+	pub fn balance(&self, who: &T::AccountId) -> T::Balance {
 		*self.balances.get(who).unwrap_or(&T::Balance::zero())
 	}
+}
 
-	/**
-	 * Transfer `amount` from one account to another. This function verifies that `from` has at
-	 * least `amount` balance to transfer, and that no mathematical overflows occur.
-	 */
-
+/* TODO: Add the `#[macros::call]` attribute right here. */
+#[macros::call]
+impl<T: Config> Pallet<T> {
+	/// Transfer `amount` from one account to another.
+	/// This function verifies that `from` has at least `amount` balance to transfer,
+	/// and that no mathematical overflows occur.
 	pub fn transfer(
 		&mut self,
-		caller: T::AccountID,
-		to: T::AccountID,
+		caller: T::AccountId,
+		to: T::AccountId,
 		amount: T::Balance,
 	) -> crate::support::DispatchResult {
 		let caller_balance = self.balance(&caller);
 		let to_balance = self.balance(&to);
-		let new_caller_balance = caller_balance.checked_sub(&amount).ok_or("Not enough funds")?;
-		let new_to_balance = to_balance.checked_add(&amount).ok_or("Integer Overflow")?;
-		self.set_balance(&caller, new_caller_balance);
-		self.set_balance(&to, new_to_balance);
 
-		Ok(())
-	}
-}
+		let new_caller_balance = caller_balance.checked_sub(&amount).ok_or("Not enough funds.")?;
+		let new_to_balance = to_balance.checked_add(&amount).ok_or("Overflow")?;
 
-// A public enum which describes the calls we want to expose to the dispatcher.
-// We should expect that the caller of each call will be provided by the dispatcher,
-// and not included as a parameter of the call.
-pub enum Call<T: Config> {
-	Transfer { to: T::AccountID, amount: T::Balance },
-}
+		self.balances.insert(caller, new_caller_balance);
+		self.balances.insert(to, new_to_balance);
 
-/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
-/// function we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-	type Caller = T::AccountID;
-	type Call = Call<T>;
-
-	fn dispatch(
-		&mut self,
-		caller: Self::Caller,
-		call: Self::Call,
-	) -> crate::support::DispatchResult {
-		match call {
-			Call::Transfer { to, amount } => {
-				self.transfer(caller, to, amount)?;
-			},
-		}
 		Ok(())
 	}
 }
@@ -91,7 +68,7 @@ impl<T: Config> crate::support::Dispatch for Pallet<T> {
 mod tests {
 	struct TestConfig;
 	impl crate::system::Config for TestConfig {
-		type AccountID = String;
+		type AccountId = String;
 		type BlockNumber = u32;
 		type Nonce = u32;
 	}
@@ -126,7 +103,7 @@ mod tests {
 
 		let result = balances.transfer("Alice".to_string(), "Bob".to_string(), 150);
 		assert!(result.is_err());
-		assert_eq!(result.unwrap_err(), "Not enough funds");
+		assert_eq!(result.unwrap_err(), "Not enough funds.");
 		assert_eq!(balances.balance(&"Alice".to_string()), 100);
 		assert_eq!(balances.balance(&"Bob".to_string()), 50);
 

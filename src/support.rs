@@ -2,7 +2,6 @@
  * The reason the frame_support crate exists, is to allow multiple other crates use common types
  * and trait, while avoiding cyclic dependencies, which is not allowed in Rust.
  */
-
 /// The most primitive representation of a Blockchain block.
 pub struct Block<Header, Extrinsic> {
 	/**

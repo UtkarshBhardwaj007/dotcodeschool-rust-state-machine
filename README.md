@@ -143,3 +143,17 @@ The block header contains metadata about the block which is used to verify that 
 * The Proof of Existence Pallet uses the blockchain to provide a secure and immutable ledger that can be used to verify the existence of a particular document or piece of data at a specific point in time as the blockchain acts as an immutable ledger whose history cannot be changed.
 * We use a `BTreeMap` for storage here. In actual blockchains like `PolkaDot`, there usually is a storage layer that is used to store the data. Rather than having a map from accounts to some data, we will actually map the content we want to claim to the user who owns it. This construction of content -> account allows an account to be the owner of multiple different claims, but having each claim only be owned by one user.
 * Remember that when we create the `call enum` in each pallet, we don't need to pass the caller data in the enum variants. The `caller` is provided by the `dispatch` logic.
+
+### 11.7 Macros in polkadot-sdk
+* All the pallets and the runtime follow a certain pattern and thus we can write and use `macros` for them.
+
+#### 11.7.1 The Call Macro
+* The purpose of the `#[macros::call]` macro is to automatically generate the `enum Call` from the functions of the pallet and the pallet level `Dispatch` logic found in each Pallet.
+* We can place the `#[macros::call]` attribute over our `impl<T: Config> Pallet<T>` where the callable functions are implemented. From there, the macro can parse the whole object, and extract the data it needs. Not all of your functions are intended to be callable, so you can isolate the functions which should be "callable" in their own `impl<T: Config> Pallet<T>`.
+* The Call macro has 2 main files:
+  * **Parse**: 
+    * In order to generate the code that we want, we need to keep track of each `callable function` (name of that function, each argument name and types) that the developer wants to expose through the Runtime and the name of the `struct` where those functions are implemented. Normally this is `Pallet`, but we can allow the developer flexibility in their naming.
+    * These things are tracked with `CallDef` and `CallVariantDef`
+    * Also, during the parsing process, we might want to check for certain consistencies in the code being parsed. In this case, we require that every callable function muse have `caller` as their first parameter with `type T::AccountId`. This checking logic is handled by `fn check_caller_arg`.
+  * **Expand**:
+    * Once we have parsed all the data we need, generating the code is straight forward. If you jump down to `let dispatch_impl = quote!` you will see a bunch of code that looks like the templates we used earlier in the tutorial. We just left markers where the macro generation logic should place all the information to write the code we need.
